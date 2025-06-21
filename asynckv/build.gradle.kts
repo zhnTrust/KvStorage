@@ -40,4 +40,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    api("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
+    api("androidx.lifecycle:lifecycle-livedata-ktx:2.9.1")
+    api("androidx.datastore:datastore-preferences:1.1.7")
+    api("com.tencent:mmkv:1.3.12")
+    api("com.google.code.gson:gson:2.13.1")
 }
