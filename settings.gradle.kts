@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "KvStorage"
 include(":app")
- 
+include(":asynckv")
