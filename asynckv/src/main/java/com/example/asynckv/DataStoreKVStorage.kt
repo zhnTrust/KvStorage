@@ -2,9 +2,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlin.reflect.KClass
 
 class DataStoreKVStorage(
     private val dataStore: DataStore<Preferences>
@@ -16,7 +16,7 @@ class DataStoreKVStorage(
         }
     }
 
-    override suspend fun performGet(key: String): Any? {
+    override suspend fun performGet(key: String, kClass: KClass<*>): Any? {
         val prefKey = stringPreferencesKey(key)
         return dataStore.data
             .map { prefs -> prefs[prefKey] }
@@ -36,10 +36,10 @@ class DataStoreKVStorage(
         }
     }
 
-    override suspend fun performGetAll(keys: List<String>): Map<String, Any> {
+    override suspend fun performGetAll(): Map<String, Any> {
         return dataStore.data
             .map { prefs ->
-                keys.associateWith { key ->
+                getAllKeys().associateWith { key ->
                     val prefKey = stringPreferencesKey(key)
                     prefs[prefKey]
                 }.filterValues { it != null }

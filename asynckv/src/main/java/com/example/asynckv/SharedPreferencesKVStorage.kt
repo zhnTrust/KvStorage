@@ -1,6 +1,7 @@
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlin.reflect.KClass
 
 class SharedPreferencesKVStorage(
     private val context: Context,
@@ -23,7 +24,7 @@ class SharedPreferencesKVStorage(
         }
     }
 
-    override suspend fun performGet(key: String): Any? {
+    override suspend fun performGet(key: String, kClass: KClass<*>): Any? {
         return if (prefs.contains(key)) {
             prefs.all[key]
         } else {
@@ -43,8 +44,8 @@ class SharedPreferencesKVStorage(
         }
     }
 
-    override suspend fun performGetAll(keys: List<String>): Map<String, Any> {
-        return prefs.all.filterKeys { it in keys }.mapValues { it.value!! }
+    override suspend fun performGetAll(): Map<String, Any> {
+        return prefs.all.filter { it.value != null }.mapValues { it.value!! }
     }
 
     override suspend fun getAllKeys(): List<String> {

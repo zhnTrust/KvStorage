@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KClass
 
 abstract class BaseKVStorage : KVStorage {
     private val changeFlow = MutableStateFlow<Pair<String, Any?>>(Pair("", null))
@@ -16,34 +17,34 @@ abstract class BaseKVStorage : KVStorage {
 
     // 需要子类实现的抽象方法
     protected abstract suspend fun performPut(key: String, value: Any)
-    protected abstract suspend fun performGet(key: String): Any?
+    protected abstract suspend fun performGet(key: String, clazz: KClass<*>): Any?
     protected abstract suspend fun performRemove(key: String)
     protected abstract suspend fun performClear()
-    protected abstract suspend fun performGetAll(keys: List<String>): Map<String, Any>
+    protected abstract suspend fun performGetAll(): Map<String, Any>
 
     override suspend fun putString(key: String, value: String) = putValue(key, value)
     override suspend fun getString(key: String, defaultValue: String): String {
-        return getValue(key) as? String ?: defaultValue
+        return getValue<String>(key) as? String ?: defaultValue
     }
 
     override suspend fun putInt(key: String, value: Int) = putValue(key, value)
     override suspend fun getInt(key: String, defaultValue: Int): Int {
-        return getValue(key) as? Int ?: defaultValue
+        return getValue<Int>(key) as? Int ?: defaultValue
     }
 
     override suspend fun putLong(key: String, value: Long) = putValue(key, value)
     override suspend fun getLong(key: String, defaultValue: Long): Long {
-        return getValue(key) as? Long ?: defaultValue
+        return getValue<Long>(key) as? Long ?: defaultValue
     }
 
     override suspend fun putFloat(key: String, value: Float) = putValue(key, value)
     override suspend fun getFloat(key: String, defaultValue: Float): Float {
-        return getValue(key) as? Float ?: defaultValue
+        return getValue<Float>(key) as? Float ?: defaultValue
     }
 
     override suspend fun putBoolean(key: String, value: Boolean) = putValue(key, value)
     override suspend fun getBoolean(key: String, defaultValue: Boolean): Boolean {
-        return getValue(key) as? Boolean ?: defaultValue
+        return getValue<Boolean>(key) as? Boolean ?: defaultValue
     }
 
     override suspend fun <T> putObject(key: String, value: T, serializer: ObjectSerializer<T>) {
@@ -71,7 +72,7 @@ abstract class BaseKVStorage : KVStorage {
 
     override suspend fun getAll(keys: List<String>): Map<String, Any> {
         return withContext(Dispatchers.IO) {
-            performGetAll(keys)
+            performGetAll().filter { it.key in keys }
         }
     }
 
@@ -137,9 +138,9 @@ abstract class BaseKVStorage : KVStorage {
         }
     }
 
-    private suspend fun getValue(key: String): Any? {
+    private suspend inline fun <reified T> getValue(key: String): Any? {
         return withContext(Dispatchers.IO) {
-            val value = performGet(key) ?: return@withContext null
+            val value = performGet(key, T::class) ?: return@withContext null
 
             return@withContext if (encryptor != null && value is String) {
                 val decrypted = encryptor!!.decrypt(value.toByteArray(Charsets.ISO_8859_1))

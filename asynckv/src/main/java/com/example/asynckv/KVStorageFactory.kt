@@ -25,7 +25,7 @@ object KVStorageFactory {
             StorageType.SHARED_PREFERENCES -> SharedPreferencesKVStorage(context, name)
             StorageType.MMKV -> MMKVStorage(context, name)
             StorageType.DATASTORE -> {
-                val dataStore = context.createDataStore(name)
+                val dataStore = context.dataStore
                 DataStoreKVStorage(dataStore)
             }
         }

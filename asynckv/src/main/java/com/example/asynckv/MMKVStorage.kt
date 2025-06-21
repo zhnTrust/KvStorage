@@ -1,5 +1,6 @@
 import android.content.Context
 import com.tencent.mmkv.MMKV
+import kotlin.reflect.KClass
 
 class MMKVStorage(
     private val mmkv: MMKV
@@ -12,36 +13,52 @@ class MMKVStorage(
     )
 
     override suspend fun performPut(key: String, value: Any) {
+        val typeWrapKey = key.typeWrapKey(value)
         when (value) {
-            is String -> mmkv.encode(key, value)
-            is Int -> mmkv.encode(key, value)
-            is Long -> mmkv.encode(key, value)
-            is Float -> mmkv.encode(key, value)
-            is Boolean -> mmkv.encode(key, value)
-            is ByteArray -> mmkv.encode(key, value)
-            else -> mmkv.encode(key, value.toString())
+            is Int -> mmkv.encode(typeWrapKey, value)
+            is Long -> mmkv.encode(typeWrapKey, value)
+            is Float -> mmkv.encode(typeWrapKey, value)
+            is Boolean -> mmkv.encode(typeWrapKey, value)
+            is String -> mmkv.encode(typeWrapKey, value)
+            is ByteArray -> mmkv.encode(typeWrapKey, value)
+            is Set<*> -> mmkv.putStringSet(typeWrapKey, value as? Set<String>)
+            else -> {
+                //不支持的类型
+                error("not support type ${value::class.java}")
+            }
         }
     }
 
-    override suspend fun performGet(key: String): Any? {
-        return when {
-            mmkv.contains(key) -> {
-                val value = mmkv.decodeString(key)
-                if (value != null) return value
+    private fun String.typeWrapKey(value: Any) = typeWrapKey(value::class)
+    private fun String.typeWrapKey(value: KClass<*>): String {
+        val typeSuffix = "@${value.simpleName}"
+        return if (this.contains(typeSuffix)) {
+            this
+        } else {
+            this + typeSuffix
+        }
 
-                val intVal = mmkv.decodeInt(key, Int.MIN_VALUE)
-                if (intVal != Int.MIN_VALUE) return intVal
+    }
 
-                val longVal = mmkv.decodeLong(key, Long.MIN_VALUE)
-                if (longVal != Long.MIN_VALUE) return longVal
+    private val String.keyAndType
+        get() = run {
+            substringBefore("@") to substringAfter("@")
+        }
 
-                val floatVal = mmkv.decodeFloat(key, Float.NaN)
-                if (!floatVal.isNaN()) return floatVal
-
-                mmkv.decodeBool(key, false)
+    override suspend fun performGet(key: String, clazz: KClass<*>): Any? {
+        val typeWrapKey = key.typeWrapKey(clazz)
+        return when (clazz) {
+            Int::class -> mmkv.getInt(typeWrapKey, 0)
+            Long::class -> mmkv.getLong(typeWrapKey, 0L)
+            Float::class -> mmkv.getFloat(typeWrapKey, 0F)
+            Boolean::class -> mmkv.getBoolean(typeWrapKey, false)
+            String::class -> mmkv.getString(typeWrapKey, null)
+            ByteArray::class -> mmkv.getBytes(typeWrapKey, null)
+            Set::class -> mmkv.getStringSet(typeWrapKey, null)
+            else -> {
+                //不支持的类型
+                error("not support type ${clazz.java}")
             }
-
-            else -> null
         }
     }
 
@@ -53,8 +70,23 @@ class MMKVStorage(
         mmkv.clearAll()
     }
 
-    override suspend fun performGetAll(keys: List<String>): Map<String, Any> {
-        return keys.associateWith { performGet(it) }.filterValues { it != null } as Map<String, Any>
+    override suspend fun performGetAll(): Map<String, Any> {
+        return getAllKeys().associateWith { typeWrapKey ->
+            val (_, type) = typeWrapKey.keyAndType
+            when (type) {
+                Int::class.simpleName -> mmkv.getInt(typeWrapKey, 0)
+                Long::class.simpleName -> mmkv.getLong(typeWrapKey, 0L)
+                Float::class.simpleName -> mmkv.getFloat(typeWrapKey, 0F)
+                Boolean::class.simpleName -> mmkv.getBoolean(typeWrapKey, false)
+                String::class.simpleName -> mmkv.getString(typeWrapKey, null)
+                ByteArray::class.simpleName -> mmkv.getBytes(typeWrapKey, null)
+                Set::class.simpleName -> mmkv.getStringSet(typeWrapKey, null)
+                else -> {
+                    //不支持的类型
+                    error("not support type $type")
+                }
+            }
+        }.filterValues { it != null } as Map<String, Any>
     }
 
     override suspend fun getAllKeys(): List<String> {
