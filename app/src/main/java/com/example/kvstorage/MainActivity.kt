@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
             kvStorage.putFloat("score", 99.9f)
             kvStorage.putLong("height", 185L)
             kvStorage.putBoolean("isBoy", true)
-//            kvStorage.putStringSet("interest", setOf("GYM", "Football"))
+            kvStorage.putStringSet("interest", setOf("GYM", "Football"))
 
             // 读取数据
             val username = kvStorage.getString("username")
@@ -73,13 +73,13 @@ class MainActivity : AppCompatActivity() {
             val score = kvStorage.getFloat("score")
             val height = kvStorage.getLong("height")
             val isBoy = kvStorage.getBoolean("isBoy")
-//            val interest = kvStorage.getStringSet("interest")
+            val interest = kvStorage.getStringSet("interest")
             print("username: $username")
             print("age: $age")
             print("score: $score")
             print("height: $height")
             print("isBoy: $isBoy")
-//            print("interest: $interest")
+            print("interest: $interest")
 
             // 对象存储
             val user = User("John", "Doe", 30)

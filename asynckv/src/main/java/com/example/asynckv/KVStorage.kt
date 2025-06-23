@@ -7,6 +7,8 @@ interface KVStorage {
     // 基础操作
     suspend fun putString(key: String, value: String)
     suspend fun getString(key: String, defaultValue: String = ""): String
+    suspend fun putStringSet(key: String, value: Set<String>)
+    suspend fun getStringSet(key: String, defaultValue: Set<String> = setOf()): Set<String>
     suspend fun putInt(key: String, value: Int)
     suspend fun getInt(key: String, defaultValue: Int = 0): Int
     suspend fun putLong(key: String, value: Long)

@@ -13,15 +13,14 @@ class MMKVStorage(
     )
 
     override suspend fun performPut(key: String, value: Any) {
-        val typeWrapKey = key.typeWrapKey(value)
         when (value) {
-            is Int -> mmkv.encode(typeWrapKey, value)
-            is Long -> mmkv.encode(typeWrapKey, value)
-            is Float -> mmkv.encode(typeWrapKey, value)
-            is Boolean -> mmkv.encode(typeWrapKey, value)
-            is String -> mmkv.encode(typeWrapKey, value)
-            is ByteArray -> mmkv.encode(typeWrapKey, value)
-            is Set<*> -> mmkv.putStringSet(typeWrapKey, value as? Set<String>)
+            is Int -> mmkv.encode(getTypeKey<Int>(key), value)
+            is Long -> mmkv.encode(getTypeKey<Long>(key), value)
+            is Float -> mmkv.encode(getTypeKey<Float>(key), value)
+            is Boolean -> mmkv.encode(getTypeKey<Boolean>(key), value)
+            is String -> mmkv.encode(getTypeKey<String>(key), value)
+            is ByteArray -> mmkv.encode(getTypeKey<ByteArray>(key), value)
+            is Set<*> -> mmkv.putStringSet(getTypeKey<Set<String>>(key), value as? Set<String>)
             else -> {
                 //不支持的类型
                 error("not support type ${value::class.java}")
@@ -30,15 +29,13 @@ class MMKVStorage(
     }
 
 
-    private fun String.typeWrapKey(value: Any) = typeWrapKey(value::class)
-    private fun String.typeWrapKey(value: KClass<*>): String {
-        val typeSuffix = "@${value.simpleName}"
-        return if (this.contains(typeSuffix)) {
-            this
+    private inline fun <reified T> getTypeKey(key: String): String {
+        val type = "@" + T::class.simpleName
+        return if (key.contains(type)) {
+            type
         } else {
-            this + typeSuffix
+            key + type
         }
-
     }
 
     private val String.keyAndType
@@ -52,15 +49,14 @@ class MMKVStorage(
         defaultValue: T,
         clazz: KClass<T>
     ): T? {
-        val typeWrapKey = key.typeWrapKey(clazz)
         val value = when (defaultValue) {
-            Int::class -> mmkv.getInt(typeWrapKey, defaultValue as Int)
-            Long::class -> mmkv.getLong(typeWrapKey, defaultValue as Long)
-            Float::class -> mmkv.getFloat(typeWrapKey, defaultValue as Float)
-            Boolean::class -> mmkv.getBoolean(typeWrapKey, defaultValue as Boolean)
-            String::class -> mmkv.getString(typeWrapKey, null)
-            ByteArray::class -> mmkv.getBytes(typeWrapKey, null)
-            Set::class -> mmkv.getStringSet(typeWrapKey, null)
+            Int::class -> mmkv.getInt(getTypeKey<Int>(key), defaultValue as Int)
+            Long::class -> mmkv.getLong(getTypeKey<Long>(key), defaultValue as Long)
+            Float::class -> mmkv.getFloat(getTypeKey<Float>(key), defaultValue as Float)
+            Boolean::class -> mmkv.getBoolean(getTypeKey<Boolean>(key), defaultValue as Boolean)
+            String::class -> mmkv.getString(getTypeKey<String>(key), null)
+            ByteArray::class -> mmkv.getBytes(getTypeKey<ByteArray>(key), null)
+            Set::class -> mmkv.getStringSet(getTypeKey<Set<String>>(key), null)
             else -> {
                 //不支持的类型
                 error("not support type ${clazz.java}")
@@ -88,6 +84,7 @@ class MMKVStorage(
                     Boolean::class.simpleName -> mmkv.getBoolean(typeWrapKey, false)
                     String::class.simpleName -> mmkv.getString(typeWrapKey, null)
                     ByteArray::class.simpleName -> mmkv.getBytes(typeWrapKey, null)
+                    Set::class.simpleName -> mmkv.getStringSet(typeWrapKey, null)
                     else -> {
                         //不支持的类型
                         error("not support type $type")
