@@ -122,6 +122,31 @@ abstract class BaseKVStorage : KVStorage {
         }
     }
 
+    override suspend fun migrateFrom(migrations: List<KVDataMigration>) {
+        withContext(Dispatchers.IO) {
+            val cleanUps = mutableListOf<suspend () -> Unit>()
+            migrations.forEach { migration ->
+                if (migration.shouldMigrate(this@BaseKVStorage)) {
+                    cleanUps.add { migration.cleanUp() }
+                    migration.migrate(this@BaseKVStorage)
+                }
+            }
+            var cleanUpFailure: Throwable? = null
+
+            cleanUps.forEach { cleanUp ->
+                try {
+                    cleanUp()
+                } catch (exception: Throwable) {
+                    if (cleanUpFailure == null) {
+                        cleanUpFailure = exception
+                    } else {
+                        cleanUpFailure.addSuppressed(exception)
+                    }
+                }
+            }
+        }
+    }
+
     override suspend fun getAllKeys(): List<String> {
         // 默认实现，子类可以覆盖
         return emptyList()
@@ -129,10 +154,9 @@ abstract class BaseKVStorage : KVStorage {
 
     private suspend fun putValue(key: String, value: Any) {
         withContext(Dispatchers.IO) {
-            val processedValue = encryptor?.let {
-                it.encrypt(value.toString().toByteArray()).toString(Charsets.ISO_8859_1)
-            } ?: value
-
+            val processedValue =
+                encryptor?.encrypt(value.toString().toByteArray())?.toString(Charsets.ISO_8859_1)
+                    ?: value
             performPut(key, processedValue)
             notifyChange(key, value)
         }
@@ -141,9 +165,9 @@ abstract class BaseKVStorage : KVStorage {
     private suspend inline fun <reified T> getValue(key: String): Any? {
         return withContext(Dispatchers.IO) {
             val value = performGet(key, T::class) ?: return@withContext null
-
-            return@withContext if (encryptor != null && value is String) {
-                val decrypted = encryptor!!.decrypt(value.toByteArray(Charsets.ISO_8859_1))
+            val crypto = encryptor
+            if (crypto != null && value is String) {
+                val decrypted = crypto.decrypt(value.toByteArray(Charsets.ISO_8859_1))
                 String(decrypted)
             } else {
                 value

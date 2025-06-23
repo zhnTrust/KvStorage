@@ -36,6 +36,7 @@ interface KVStorage {
 
     // 迁移
     suspend fun migrateFrom(other: KVStorage)
+    suspend fun migrateFrom(kvDataMigration: List<KVDataMigration>)
 
     // 加密
     fun enableEncryption(encryptor: KVEncryptor)
@@ -55,4 +56,13 @@ interface ObjectSerializer<T> {
 interface KVEncryptor {
     fun encrypt(data: ByteArray): ByteArray
     fun decrypt(encrypted: ByteArray): ByteArray
+}
+
+/**
+ * 迁移接口
+ */
+interface KVDataMigration{
+    suspend fun shouldMigrate(asyncKv: KVStorage): Boolean
+    suspend fun migrate(asyncKv: KVStorage)
+    suspend fun cleanUp()
 }

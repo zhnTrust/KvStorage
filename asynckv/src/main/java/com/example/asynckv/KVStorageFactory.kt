@@ -34,6 +34,7 @@ object KVStorageFactory {
 
 private val Context.dataStore by preferencesDataStore(name = "default_datastore")
 
+//该写法不能保证唯一
 fun Context.createDataStore(name: String): DataStore<Preferences> {
     return preferencesDataStore(name = name).getValue(this, ::dataStore)
 }
