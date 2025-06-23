@@ -71,25 +71,33 @@ class MMKVStorage(
     }
 
     override suspend fun performGetAll(): Map<String, Any> {
-        return getAllKeys().associateWith { typeWrapKey ->
-            val (_, type) = typeWrapKey.keyAndType
-            when (type) {
-                Int::class.simpleName -> mmkv.getInt(typeWrapKey, 0)
-                Long::class.simpleName -> mmkv.getLong(typeWrapKey, 0L)
-                Float::class.simpleName -> mmkv.getFloat(typeWrapKey, 0F)
-                Boolean::class.simpleName -> mmkv.getBoolean(typeWrapKey, false)
-                String::class.simpleName -> mmkv.getString(typeWrapKey, null)
-                ByteArray::class.simpleName -> mmkv.getBytes(typeWrapKey, null)
-                Set::class.simpleName -> mmkv.getStringSet(typeWrapKey, null)
-                else -> {
-                    //不支持的类型
-                    error("not support type $type")
+        return getOriginAllKeys()
+            .associateWith { typeWrapKey ->
+                val (_, type) = typeWrapKey.keyAndType
+                when (type) {
+                    Int::class.simpleName -> mmkv.getInt(typeWrapKey, 0)
+                    Long::class.simpleName -> mmkv.getLong(typeWrapKey, 0L)
+                    Float::class.simpleName -> mmkv.getFloat(typeWrapKey, 0F)
+                    Boolean::class.simpleName -> mmkv.getBoolean(typeWrapKey, false)
+                    String::class.simpleName -> mmkv.getString(typeWrapKey, null)
+                    ByteArray::class.simpleName -> mmkv.getBytes(typeWrapKey, null)
+                    Set::class.simpleName -> mmkv.getStringSet(typeWrapKey, null)
+                    else -> {
+                        //不支持的类型
+                        error("not support type $type")
+                    }
                 }
             }
-        }.filterValues { it != null } as Map<String, Any>
+            .mapKeys { it.key.keyAndType.first }
+            .filterValues { it != null } as Map<String, Any>
+    }
+
+
+    private fun getOriginAllKeys(): List<String> {
+        return mmkv.allKeys()?.toList() ?: emptyList()
     }
 
     override suspend fun getAllKeys(): List<String> {
-        return mmkv.allKeys()?.toList() ?: emptyList()
+        return getOriginAllKeys().map { it.keyAndType.first }
     }
 }

@@ -9,9 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.asynckv.AES
+import com.example.asynckv.AesKVEncryptor
 import com.example.asynckv.KVStorageFactory
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.launch
+
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
@@ -38,12 +41,16 @@ class MainActivity : AppCompatActivity() {
 
         // 启用加密
 //        val encryptor = AesKVEncryptor(
-//            passWord = "123".toByteArray(),
+//            passWord = "pwd123".toByteArray(),
 //        )
 //        kvStorage.enableEncryption(encryptor)
 
         // 基本使用
         lifecycleScope.launch {
+
+            val str = AES.encrypt("你好")
+            print("-=-=加密: "+ str!!)
+            print("-=-=解密: "+AES.decrypt(str))
             // 存储数据
             kvStorage.putString("username", "john_doe")
             kvStorage.putInt("age", 30)
@@ -83,16 +90,18 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity,
                 KVStorageFactory.StorageType.SHARED_PREFERENCES
             )
+//            spStorage.enableEncryption(encryptor)
             val dtStorage = KVStorageFactory.create(
                 this@MainActivity,
                 KVStorageFactory.StorageType.DATASTORE
             )
+//            dtStorage.enableEncryption(encryptor)
             spStorage.migrateFrom(kvStorage)
             dtStorage.migrateFrom(kvStorage)
 
-            print("kvStorage: ${kvStorage.getAll(kvStorage.getAllKeys())}")
-            print("newStorage: ${spStorage.getAll(spStorage.getAllKeys())}")
-            print("dtStorage: ${dtStorage.getAll(dtStorage.getAllKeys())}")
+            print("kvStorage: ${kvStorage.getAll()}")
+            print("spStorage: ${spStorage.getAll()}")
+            print("dtStorage: ${dtStorage.getAll()}")
         }
     }
 

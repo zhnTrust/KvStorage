@@ -37,13 +37,10 @@ class DataStoreKVStorage(
     }
 
     override suspend fun performGetAll(): Map<String, Any> {
-        return dataStore.data
-            .map { prefs ->
-                getAllKeys().associateWith { key ->
-                    val prefKey = stringPreferencesKey(key)
-                    prefs[prefKey]
-                }.filterValues { it != null }
-            }
-            .first() as Map<String, Any>
+        return dataStore.data.first().asMap().mapKeys { it.key.name }
+    }
+
+    override suspend fun getAllKeys(): List<String> {
+        return dataStore.data.first().asMap().map { it.key.name }
     }
 }

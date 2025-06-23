@@ -1,3 +1,4 @@
+import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,9 +71,13 @@ abstract class BaseKVStorage : KVStorage {
         }
     }
 
-    override suspend fun getAll(keys: List<String>): Map<String, Any> {
+    override suspend fun getAll(keys: List<String>?): Map<String, Any> {
         return withContext(Dispatchers.IO) {
-            performGetAll().filter { it.key in keys }
+            if (keys.isNullOrEmpty()) {
+                performGetAll()
+            } else {
+                performGetAll().filter { it.key in keys }
+            }
         }
     }
 
@@ -154,9 +159,12 @@ abstract class BaseKVStorage : KVStorage {
 
     private suspend fun putValue(key: String, value: Any) {
         withContext(Dispatchers.IO) {
-            val processedValue =
-                encryptor?.encrypt(value.toString().toByteArray())?.toString(Charsets.ISO_8859_1)
-                    ?: value
+            val crypto = encryptor
+            val processedValue = if (crypto != null && value is String) {
+                crypto.encrypt(value)
+            } else {
+                value
+            }
             performPut(key, processedValue)
             notifyChange(key, value)
         }
@@ -167,8 +175,7 @@ abstract class BaseKVStorage : KVStorage {
             val value = performGet(key, T::class) ?: return@withContext null
             val crypto = encryptor
             if (crypto != null && value is String) {
-                val decrypted = crypto.decrypt(value.toByteArray(Charsets.ISO_8859_1))
-                String(decrypted)
+                crypto.decrypt(value)
             } else {
                 value
             }

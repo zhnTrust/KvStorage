@@ -23,7 +23,7 @@ interface KVStorage {
     // 批量操作
     suspend fun getAllKeys(): List<String>
     suspend fun putAll(values: Map<String, Any>)
-    suspend fun getAll(keys: List<String>): Map<String, Any>
+    suspend fun getAll(keys: List<String>? = null): Map<String, Any>
 
     // 删除操作
     suspend fun remove(key: String)
@@ -54,14 +54,14 @@ interface ObjectSerializer<T> {
  * 加密接口
  */
 interface KVEncryptor {
-    fun encrypt(data: ByteArray): ByteArray
-    fun decrypt(encrypted: ByteArray): ByteArray
+    fun encrypt(data: String): String
+    fun decrypt(encrypted: String): String
 }
 
 /**
  * 迁移接口
  */
-interface KVDataMigration{
+interface KVDataMigration {
     suspend fun shouldMigrate(asyncKv: KVStorage): Boolean
     suspend fun migrate(asyncKv: KVStorage)
     suspend fun cleanUp()

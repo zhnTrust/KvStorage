@@ -1,6 +1,9 @@
 package com.example.asynckv
 
 import KVEncryptor
+import android.util.Base64
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 import java.security.Security
 import javax.crypto.Cipher
@@ -13,7 +16,7 @@ class AesKVEncryptor(
     private val passWord: ByteArray,
 ) : KVEncryptor {
     private val ivSpec by lazy {
-        val bytes=ByteArray(16)
+        val bytes = ByteArray(16)
         SecureRandom().nextBytes(bytes)
         IvParameterSpec(bytes)
     }
@@ -28,19 +31,20 @@ class AesKVEncryptor(
     }
 
 
-    override fun encrypt(data: ByteArray): ByteArray {
-        Security.getProviders()
-        val cipher = Cipher.getInstance(cipher)
-        val key = getKey().encoded
-        val keySpec = SecretKeySpec(key, algorithm)
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
-        return cipher.doFinal(data)
+    override fun encrypt(data: String): String {
+       return AES.encrypt(data)
+//        val cipher = Cipher.getInstance(cipher)
+//        val key = getKey().encoded
+//        val keySpec = SecretKeySpec(key, algorithm)
+//        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
+//        return cipher.doFinal(data)
     }
 
-    override fun decrypt(encrypted: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance(cipher)
-        val keySpec = SecretKeySpec(getKey().encoded, algorithm)
-        cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
-        return cipher.doFinal(encrypted)
+    override fun decrypt(encrypted: String): String {
+       return AES.decrypt(encrypted)
+//        val cipher = Cipher.getInstance(cipher)
+//        val keySpec = SecretKeySpec(getKey().encoded, algorithm)
+//        cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
+//        return cipher.doFinal(encrypted)
     }
 }
