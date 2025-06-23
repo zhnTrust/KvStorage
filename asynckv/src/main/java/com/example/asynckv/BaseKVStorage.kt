@@ -1,4 +1,3 @@
-import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +14,24 @@ abstract class BaseKVStorage : KVStorage {
     override fun enableEncryption(encryptor: KVEncryptor) {
         this.encryptor = encryptor
     }
+
+    private val Any.encryptValue
+        get() = run {
+            if (encryptor != null && this is String) {
+                encryptor!!.encrypt(this)
+            } else {
+                this
+            }
+        }
+
+    private val Any.decryptValue
+        get() = run {
+            if (encryptor != null && this is String) {
+                encryptor!!.decrypt(this)
+            } else {
+                this
+            }
+        }
 
     // 需要子类实现的抽象方法
     protected abstract suspend fun performPut(key: String, value: Any)
@@ -65,7 +82,7 @@ abstract class BaseKVStorage : KVStorage {
     override suspend fun putAll(values: Map<String, Any>) {
         withContext(Dispatchers.IO) {
             values.forEach { (key, value) ->
-                performPut(key, value)
+                performPut(key, value.encryptValue)
                 notifyChange(key, value)
             }
         }
@@ -77,6 +94,8 @@ abstract class BaseKVStorage : KVStorage {
                 performGetAll()
             } else {
                 performGetAll().filter { it.key in keys }
+            }.mapValues {
+                it.value.decryptValue
             }
         }
     }
@@ -122,8 +141,7 @@ abstract class BaseKVStorage : KVStorage {
 
     override suspend fun migrateFrom(other: KVStorage) {
         withContext(Dispatchers.IO) {
-            val allValues = other.getAll(other.getAllKeys())
-            putAll(allValues)
+            putAll(other.getAll())
         }
     }
 
@@ -159,13 +177,7 @@ abstract class BaseKVStorage : KVStorage {
 
     private suspend fun putValue(key: String, value: Any) {
         withContext(Dispatchers.IO) {
-            val crypto = encryptor
-            val processedValue = if (crypto != null && value is String) {
-                crypto.encrypt(value)
-            } else {
-                value
-            }
-            performPut(key, processedValue)
+            performPut(key, value.encryptValue)
             notifyChange(key, value)
         }
     }
@@ -173,12 +185,7 @@ abstract class BaseKVStorage : KVStorage {
     private suspend inline fun <reified T> getValue(key: String): Any? {
         return withContext(Dispatchers.IO) {
             val value = performGet(key, T::class) ?: return@withContext null
-            val crypto = encryptor
-            if (crypto != null && value is String) {
-                crypto.decrypt(value)
-            } else {
-                value
-            }
+            value.decryptValue
         }
     }
 

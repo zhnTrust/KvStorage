@@ -37,20 +37,28 @@ class MainActivity : AppCompatActivity() {
 
     fun demo() {
         // 创建存储实例
-        val kvStorage = KVStorageFactory.create(this, KVStorageFactory.StorageType.MMKV)
+        val mmkvStorage = KVStorageFactory.create(this, KVStorageFactory.StorageType.MMKV)
+        val spStorage =
+            KVStorageFactory.create(this, KVStorageFactory.StorageType.SHARED_PREFERENCES)
+        val dtStorage = KVStorageFactory.create(
+            this@MainActivity,
+            KVStorageFactory.StorageType.DATASTORE
+        )
+        val encryptor = AesKVEncryptor(
+            passWord = "pwd123".toByteArray(),
+        )
+        mmkvStorage.enableEncryption(encryptor)
+        spStorage.enableEncryption(encryptor)
+        dtStorage.enableEncryption(encryptor)
 
         // 启用加密
-//        val encryptor = AesKVEncryptor(
-//            passWord = "pwd123".toByteArray(),
-//        )
-//        kvStorage.enableEncryption(encryptor)
 
         // 基本使用
         lifecycleScope.launch {
-
+            val kvStorage = spStorage
             val str = AES.encrypt("你好")
-            print("-=-=加密: "+ str!!)
-            print("-=-=解密: "+AES.decrypt(str))
+            print("-=-=加密: " + str!!)
+            print("-=-=解密: " + AES.decrypt(str))
             // 存储数据
             kvStorage.putString("username", "john_doe")
             kvStorage.putInt("age", 30)
@@ -86,21 +94,13 @@ class MainActivity : AppCompatActivity() {
             )
 
             // 数据迁移
-            val spStorage = KVStorageFactory.create(
-                this@MainActivity,
-                KVStorageFactory.StorageType.SHARED_PREFERENCES
-            )
-//            spStorage.enableEncryption(encryptor)
-            val dtStorage = KVStorageFactory.create(
-                this@MainActivity,
-                KVStorageFactory.StorageType.DATASTORE
-            )
-//            dtStorage.enableEncryption(encryptor)
-            spStorage.migrateFrom(kvStorage)
-            dtStorage.migrateFrom(kvStorage)
 
-            print("kvStorage: ${kvStorage.getAll()}")
+
+//            spStorage.migrateFrom(kvStorage)
+//            dtStorage.migrateFrom(kvStorage)
+
             print("spStorage: ${spStorage.getAll()}")
+            print("mmkvStorage: ${mmkvStorage.getAll()}")
             print("dtStorage: ${dtStorage.getAll()}")
         }
     }
