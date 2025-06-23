@@ -61,16 +61,25 @@ class MainActivity : AppCompatActivity() {
             print("-=-=解密: " + AES.decrypt(str))
             // 存储数据
             kvStorage.putString("username", "john_doe")
-            kvStorage.putInt("age", 30)
+            kvStorage.putInt("age", 20)
             kvStorage.putFloat("score", 99.9f)
+            kvStorage.putLong("height", 185L)
+            kvStorage.putBoolean("isBoy", true)
+//            kvStorage.putStringSet("interest", setOf("GYM", "Football"))
 
             // 读取数据
             val username = kvStorage.getString("username")
             val age = kvStorage.getInt("age")
             val score = kvStorage.getFloat("score")
+            val height = kvStorage.getLong("height")
+            val isBoy = kvStorage.getBoolean("isBoy")
+//            val interest = kvStorage.getStringSet("interest")
             print("username: $username")
             print("age: $age")
             print("score: $score")
+            print("height: $height")
+            print("isBoy: $isBoy")
+//            print("interest: $interest")
 
             // 对象存储
             val user = User("John", "Doe", 30)
@@ -96,12 +105,14 @@ class MainActivity : AppCompatActivity() {
             // 数据迁移
 
 
-//            spStorage.migrateFrom(kvStorage)
-//            dtStorage.migrateFrom(kvStorage)
+            spStorage.migrateFrom(kvStorage)
+            mmkvStorage.migrateFrom(kvStorage)
+            dtStorage.migrateFrom(kvStorage)
 
             print("spStorage: ${spStorage.getAll()}")
             print("mmkvStorage: ${mmkvStorage.getAll()}")
             print("dtStorage: ${dtStorage.getAll()}")
+//            print("${dtStorage.getFloat("username")}")
         }
     }
 

@@ -29,6 +29,7 @@ class MMKVStorage(
         }
     }
 
+
     private fun String.typeWrapKey(value: Any) = typeWrapKey(value::class)
     private fun String.typeWrapKey(value: KClass<*>): String {
         val typeSuffix = "@${value.simpleName}"
@@ -45,13 +46,18 @@ class MMKVStorage(
             substringBefore("@") to substringAfter("@")
         }
 
-    override suspend fun performGet(key: String, clazz: KClass<*>): Any? {
+
+    override suspend fun <T : Any> performGet(
+        key: String,
+        defaultValue: T,
+        clazz: KClass<T>
+    ): T? {
         val typeWrapKey = key.typeWrapKey(clazz)
-        return when (clazz) {
-            Int::class -> mmkv.getInt(typeWrapKey, 0)
-            Long::class -> mmkv.getLong(typeWrapKey, 0L)
-            Float::class -> mmkv.getFloat(typeWrapKey, 0F)
-            Boolean::class -> mmkv.getBoolean(typeWrapKey, false)
+        val value = when (defaultValue) {
+            Int::class -> mmkv.getInt(typeWrapKey, defaultValue as Int)
+            Long::class -> mmkv.getLong(typeWrapKey, defaultValue as Long)
+            Float::class -> mmkv.getFloat(typeWrapKey, defaultValue as Float)
+            Boolean::class -> mmkv.getBoolean(typeWrapKey, defaultValue as Boolean)
             String::class -> mmkv.getString(typeWrapKey, null)
             ByteArray::class -> mmkv.getBytes(typeWrapKey, null)
             Set::class -> mmkv.getStringSet(typeWrapKey, null)
@@ -60,6 +66,7 @@ class MMKVStorage(
                 error("not support type ${clazz.java}")
             }
         }
+        return value as? T
     }
 
     override suspend fun performRemove(key: String) {
@@ -81,7 +88,6 @@ class MMKVStorage(
                     Boolean::class.simpleName -> mmkv.getBoolean(typeWrapKey, false)
                     String::class.simpleName -> mmkv.getString(typeWrapKey, null)
                     ByteArray::class.simpleName -> mmkv.getBytes(typeWrapKey, null)
-                    Set::class.simpleName -> mmkv.getStringSet(typeWrapKey, null)
                     else -> {
                         //不支持的类型
                         error("not support type $type")

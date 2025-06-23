@@ -1,7 +1,13 @@
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlin.reflect.KClass
@@ -11,16 +17,45 @@ class DataStoreKVStorage(
 ) : BaseKVStorage() {
     override suspend fun performPut(key: String, value: Any) {
         dataStore.edit { prefs ->
-            val prefKey = stringPreferencesKey(key)
-            prefs[prefKey] = value.toString()
+            prefs
+            when (value) {
+                is Int -> prefs[intPreferencesKey(key)] = value
+                is Long -> prefs[longPreferencesKey(key)] = value
+                is Float -> prefs[floatPreferencesKey(key)] = value
+                is Boolean -> prefs[booleanPreferencesKey(key)] = value
+                is String -> prefs[stringPreferencesKey(key)] = value
+                is Set<*> -> prefs[stringSetPreferencesKey(key)] = value as Set<String>
+                is ByteArray -> prefs[byteArrayPreferencesKey(key)] = value
+                else -> {
+                    //不支持的类型
+                    error("not support type ${value::class.simpleName}")
+                }
+            }
         }
     }
 
-    override suspend fun performGet(key: String, kClass: KClass<*>): Any? {
-        val prefKey = stringPreferencesKey(key)
+    override suspend fun <T : Any> performGet(
+        key: String,
+        defaultValue: T,
+        kClass: KClass<T>
+    ): T? {
+        val prefKey =
+            when (kClass) {
+                Int::class -> intPreferencesKey(key)
+                Long::class -> longPreferencesKey(key)
+                Float::class -> floatPreferencesKey(key)
+                Boolean::class -> booleanPreferencesKey(key)
+                String::class -> stringPreferencesKey(key)
+                ByteArray::class -> byteArrayPreferencesKey(key)
+                Set::class -> stringSetPreferencesKey(key)
+                else -> {
+                    //不支持的类型
+                    error("not support type ${kClass.simpleName}")
+                }
+            }
         return dataStore.data
             .map { prefs -> prefs[prefKey] }
-            .first()
+            .first() as? T
     }
 
     override suspend fun performRemove(key: String) {
