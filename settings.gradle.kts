@@ -21,4 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "KvStorage"
 include(":app")
-include(":asynckv")
+include(":lib:asynckv")
+include(":lib:asynckv-mmkv")
+include(":lib:asynckv-datastore")
+include(":lib:asynckv-preference")

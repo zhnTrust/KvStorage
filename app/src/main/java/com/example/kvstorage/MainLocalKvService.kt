@@ -1,13 +1,12 @@
 package com.example.kvstorage
 
-import GsonSerializer
-import com.example.asynckv.AsyncTypeDelegation
-import com.example.asynckv.KVStorageFactory
+import com.zhn.asynckv.serialize.GsonSerializer
+import com.zhn.asynckv.KvStorageTypeDelegation
 
 /**
  * Created by zhn on 2025/6/24.
  */
-object MainLocalKvService : AsyncTypeDelegation(
+object MainLocalKvService : KvStorageTypeDelegation(
     storage = KVStorageFactory.create(
         MyApp.app,
         KVStorageFactory.StorageType.MMKV

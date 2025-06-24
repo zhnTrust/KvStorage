@@ -1,0 +1,160 @@
+@startuml
+interface KVStorage {
++ void putString(String,String)
++ String getString(String,String)
++ void putStringSet(String,Set<String>)
++ Set<String> getStringSet(String,Set<String>)
++ void putInt(String,Int)
++ Int getInt(String,Int)
++ void putLong(String,Long)
++ Long getLong(String,Long)
++ void putFloat(String,Float)
++ Float getFloat(String,Float)
++ void putBoolean(String,Boolean)
++ Boolean getBoolean(String,Boolean)
++ void putObject(String,T,ObjectSerializer<T>)
++ T? getObject(String,ObjectSerializer<T>)
++ List<String> getAllKeys()
++ void putAll(Map<String, Any>)
++ Map<String, Any> getAll(List<String>?)
++ void remove(String)
++ void removeAll(List<String>)
++ void clear()
++ Flow<T?> observe(String)
++ Flow<Map<String, Any?>> observeAll()
++ void migrateFrom(KVStorage)
++ void migrateFrom(List<KVDataMigration>)
++ void enableEncryption(KVEncryptor)
+}
+
+interface ObjectSerializer {
++ String serialize(T)
++ T deserialize(String)
+}
+
+class KvStorageTypeDelegation$PrefKey {
++ void getValue()
++ void putValue(T)
++ void getvalue((T) -> Unit)
++ void getValueForMain(CoroutineScope,suspend (T) -> Unit)
++ void apply(T)
++ void asFlow()
++ void asLiveData()
+}
+
+class KvStorageTypeDelegation$PrefObjKey {
++ void getValue()
++ void setValue(T)
++ void getValueForMain(CoroutineScope,suspend (T?) -> Unit)
++ void apply(T)
+}
+
+class KvStorageTypeDelegation$PrefUserKey {
++ String key
+}
+
+class KvStorageTypeDelegation$PrefUserObjKey {
++ String key
+}
+
+abstract class KvStorageTypeDelegation {
+-  delegate
++ void getAll((Map<String, *>) -> Unit)
++ void clearAll()
++ void putAll(Map<String, Any>)
+}
+
+
+class AesKVEncryptor {
+-  cipherAlgorith
+-  keyAlgorithm
+-  keySize
+-  secretKey
++ String? encrypt(String)
++ String? decrypt(String)
+- String toMakeKey(String,Int,Char)
+}
+
+
+abstract class BaseKVStorage {
+-  changeFlow
+- KVEncryptor? encryptor
+-  encryptValue
+-  decryptValue
++ void enableEncryption(KVEncryptor)
+# void performPut(String,Any)
+# T performGet(String,T,KClass<T>)
+# void performRemove(String)
+# void performClear()
+# Map<String, Any> performGetAll()
++ void putString(String,String)
++ String getString(String,String)
++ void putStringSet(String,Set<String>)
++ Set<String> getStringSet(String,Set<String>)
++ void putInt(String,Int)
++ Int getInt(String,Int)
++ void putLong(String,Long)
++ Long getLong(String,Long)
++ void putFloat(String,Float)
++ Float getFloat(String,Float)
++ void putBoolean(String,Boolean)
++ Boolean getBoolean(String,Boolean)
++ void putObject(String,T,ObjectSerializer<T>)
++ T? getObject(String,ObjectSerializer<T>)
++ void putAll(Map<String, Any>)
++ Map<String, Any> getAll(List<String>?)
++ void remove(String)
++ void removeAll(List<String>)
++ void clear()
++ Flow<T?> observe(String)
++ Flow<Map<String, Any?>> observeAll()
++ void migrateFrom(KVStorage)
++ void migrateFrom(List<KVDataMigration>)
++ List<String> getAllKeys()
+- void putValue(String,Any)
+- T? getValue(String,T)
+# void notifyChange(String,Any?)
+}
+
+
+interface KVEncryptor {
++ String? encrypt(String)
++ String? decrypt(String)
+}
+
+class ScopedKVStorageImpl {
++ void getAll((Map<String, *>) -> Unit)
++ void putValue(String,Any)
++ void getValue(String,T,(T) -> Unit)
++ void clearAll()
++ void putAll(Map<String, Any>)
+}
+
+class GsonSerializer {
+-  gson
++ String serialize(T)
++ T deserialize(String)
+}
+
+
+interface ScopedKVStorage {
++ void getAll((Map<String, *>) -> Unit)
++ void putValue(String,Any)
++ void getValue(String,T,(T) -> Unit)
++ void clearAll()
++ void putAll(Map<String, Any>)
+}
+
+
+
+KvStorageTypeDelegation +.. KvStorageTypeDelegation$PrefKey
+KvStorageTypeDelegation +.. KvStorageTypeDelegation$PrefObjKey
+KvStorageTypeDelegation +.. KvStorageTypeDelegation$PrefUserKey
+PrefKey <|-- KvStorageTypeDelegation$PrefUserKey
+KvStorageTypeDelegation +.. KvStorageTypeDelegation$PrefUserObjKey
+PrefObjKey <|-- KvStorageTypeDelegation$PrefUserObjKey
+KVEncryptor <|.. AesKVEncryptor
+KVStorage <|.. BaseKVStorage
+ScopedKVStorage <|.. ScopedKVStorageImpl
+ObjectSerializer <|.. GsonSerializer
+@enduml
