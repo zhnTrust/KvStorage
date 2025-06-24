@@ -1,6 +1,7 @@
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -18,7 +19,7 @@ abstract class BaseKVStorage : KVStorage {
     private val Any.encryptValue
         get() = run {
             if (encryptor != null && this is String) {
-                encryptor!!.encrypt(this)?:this
+                encryptor!!.encrypt(this) ?: this
             } else {
                 this
             }
@@ -27,7 +28,7 @@ abstract class BaseKVStorage : KVStorage {
     private val Any.decryptValue
         get() = run {
             if (encryptor != null && this is String) {
-                encryptor!!.decrypt(this)?:this
+                encryptor!!.decrypt(this) ?: this
             } else {
                 this
             }
@@ -39,7 +40,7 @@ abstract class BaseKVStorage : KVStorage {
         key: String,
         defaultValue: T,
         clazz: KClass<T>
-    ): T?
+    ): T
 
     protected abstract suspend fun performRemove(key: String)
     protected abstract suspend fun performClear()
@@ -50,11 +51,10 @@ abstract class BaseKVStorage : KVStorage {
         return getValue<String>(key, defaultValue) as? String ?: defaultValue
     }
 
-    override suspend fun putStringSet(key: String, value: Set<String>)=putValue(key,value)
-    override suspend fun getStringSet(key: String, defaultValue: Set<String>): Set<String>{
-        return getValue<Set<String>>(key,defaultValue) as? Set<String> ?:defaultValue
+    override suspend fun putStringSet(key: String, value: Set<String>) = putValue(key, value)
+    override suspend fun getStringSet(key: String, defaultValue: Set<String>): Set<String> {
+        return getValue<Set<String>>(key, defaultValue) as? Set<String> ?: defaultValue
     }
-
 
 
     override suspend fun putInt(key: String, value: Int) = putValue(key, value)
@@ -135,10 +135,18 @@ abstract class BaseKVStorage : KVStorage {
         }
     }
 
-    override fun observe(key: String): Flow<Any?> {
+    override fun <T> observe(key: String): Flow<T?> {
         return changeFlow
-            .filter { it.first == key || it.first.isEmpty() }
-            .map { if (it.first.isEmpty()) null else it.second }
+            .filter { it.first == key }
+            .map {
+                val value = it.second
+                if (value != null) {
+                    value as? T
+                } else {
+                    null
+                }
+            }
+            .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
     }
 
@@ -197,7 +205,7 @@ abstract class BaseKVStorage : KVStorage {
 
     private suspend inline fun <reified T : Any> getValue(key: String, defaultValue: T): T? {
         return withContext(Dispatchers.IO) {
-            performGet<T>(key, defaultValue, T::class)?.decryptValue as T
+            performGet<T>(key, defaultValue, T::class).decryptValue as T
         }
     }
 

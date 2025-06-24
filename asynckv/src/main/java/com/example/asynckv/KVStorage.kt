@@ -33,7 +33,7 @@ interface KVStorage {
     suspend fun clear()
 
     // 监听
-    fun observe(key: String): Flow<Any?>
+    fun <T>observe(key: String): Flow<T?>
     fun observeAll(): Flow<Map<String, Any?>>
 
     // 迁移

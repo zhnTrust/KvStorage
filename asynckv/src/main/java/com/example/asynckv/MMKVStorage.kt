@@ -48,7 +48,7 @@ class MMKVStorage(
         key: String,
         defaultValue: T,
         clazz: KClass<T>
-    ): T? {
+    ): T {
         val value = when (clazz) {
             Int::class -> mmkv.getInt(getTypeKey<Int>(key), defaultValue as Int)
             Long::class -> mmkv.getLong(getTypeKey<Long>(key), defaultValue as Long)
@@ -61,8 +61,8 @@ class MMKVStorage(
                 //不支持的类型
                 error("not support type ${clazz.java}")
             }
-        }
-        return value as? T
+        } as? T
+        return value?:defaultValue
     }
 
     override suspend fun performRemove(key: String) {

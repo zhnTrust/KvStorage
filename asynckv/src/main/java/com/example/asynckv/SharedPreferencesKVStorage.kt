@@ -19,7 +19,7 @@ class SharedPreferencesKVStorage(
                 is Long -> putLong(key, value)
                 is Float -> putFloat(key, value)
                 is Boolean -> putBoolean(key, value)
-                is Set<*> -> putStringSet(key,value  as Set<String>)
+                is Set<*> -> putStringSet(key, value as Set<String>)
                 else -> {
                     //不支持的类型
                     error("not support type ${value::class.java}")
@@ -28,13 +28,12 @@ class SharedPreferencesKVStorage(
         }
     }
 
-
     override suspend fun <T : Any> performGet(
         key: String,
         defaultValue: T,
         clazz: KClass<T>
-    ): T? {
-        return when (clazz) {
+    ): T {
+        val value = when (clazz) {
             String::class -> prefs.getString(key, defaultValue as String)
             Int::class -> prefs.getInt(key, defaultValue as Int)
             Long::class -> prefs.getLong(key, defaultValue as Long)
@@ -46,6 +45,7 @@ class SharedPreferencesKVStorage(
                 error("not support type ${clazz.java}")
             }
         } as? T
+        return value ?: defaultValue
     }
 
     override suspend fun performRemove(key: String) {

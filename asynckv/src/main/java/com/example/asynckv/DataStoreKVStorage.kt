@@ -38,7 +38,7 @@ class DataStoreKVStorage(
         key: String,
         defaultValue: T,
         kClass: KClass<T>
-    ): T? {
+    ): T {
         val prefKey =
             when (kClass) {
                 Int::class -> intPreferencesKey(key)
@@ -53,9 +53,10 @@ class DataStoreKVStorage(
                     error("not support type ${kClass.simpleName}")
                 }
             }
-        return dataStore.data
+        val res = dataStore.data
             .map { prefs -> prefs[prefKey] }
             .first() as? T
+        return res ?: defaultValue
     }
 
     override suspend fun performRemove(key: String) {

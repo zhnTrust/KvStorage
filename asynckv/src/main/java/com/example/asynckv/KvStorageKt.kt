@@ -1,6 +1,7 @@
 package com.example.asynckv
 
 import KVStorage
+import androidx.lifecycle.liveData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -11,13 +12,26 @@ import kotlinx.coroutines.launch
 /**
  * 类型安全扩展
  */
-suspend inline fun <reified T> KVStorage.getTyped(key: String, defaultValue: T): T {
-    return when (T::class) {
-        String::class -> getString(key, defaultValue as? String ?: "") as T
-        Int::class -> getInt(key, defaultValue as? Int ?: 0) as T
-        Long::class -> getLong(key, defaultValue as? Long ?: 0L) as T
-        Float::class -> getFloat(key, defaultValue as? Float ?: 0f) as T
-        Boolean::class -> getBoolean(key, defaultValue as? Boolean ?: false) as T
+suspend fun <T : Any> KVStorage.getTyped(key: String, defaultValue: T): T {
+    return when (defaultValue) {
+        is String -> getString(key, defaultValue) as T
+        is Int -> getInt(key, defaultValue) as T
+        is Long -> getLong(key, defaultValue) as T
+        is Float -> getFloat(key, defaultValue) as T
+        is Boolean -> getBoolean(key, defaultValue) as T
+        is Set<*> -> getStringSet(key, defaultValue as Set<String>) as T
+        else -> throw IllegalArgumentException("Unsupported type")
+    }
+}
+
+suspend fun <T : Any> KVStorage.putTyped(key: String, defaultValue: T) {
+    when (defaultValue) {
+        is String -> putString(key, defaultValue)
+        is Int -> putInt(key, defaultValue)
+        is Long -> putLong(key, defaultValue)
+        is Float -> putFloat(key, defaultValue)
+        is Boolean -> putBoolean(key, defaultValue)
+        is Set<*> -> putStringSet(key, defaultValue as Set<String>)
         else -> throw IllegalArgumentException("Unsupported type")
     }
 }

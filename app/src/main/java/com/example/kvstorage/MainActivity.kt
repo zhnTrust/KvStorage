@@ -8,10 +8,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import com.example.asynckv.AesKVEncryptor
 import com.example.asynckv.KVStorageFactory
 import com.tencent.mmkv.MMKV
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 
@@ -50,14 +53,27 @@ class MainActivity : AppCompatActivity() {
         spStorage.enableEncryption(encryptor)
         dtStorage.enableEncryption(encryptor)
 
+        val kvStorage = mmkvStorage
+
+        //这个封装获取不到
+//        MainLocalKvService.username.asLiveData().observe(this) {
+//            print("delegate liveData User changed: $it")
+//        }
+        kvStorage.observe<String>("username").asLiveData().observe(this) {
+            print("liveData User changed: $it")
+        }
         // 启用加密
 
         // 基本使用
         lifecycleScope.launch {
-            val kvStorage = spStorage
-//            val str = AES.encrypt("你好")
-//            print("-=-=加密: " + str!!)
-//            print("-=-=解密: " + AES.decrypt(str))
+
+            // 监听变化
+//            launch {
+//                kvStorage.observe("user").collect { user ->
+//                    print("User changed: $user")
+//                }
+//            }
+
             // 存储数据
             kvStorage.putString("username", "john_doe")
             kvStorage.putInt("age", 20)
@@ -79,19 +95,12 @@ class MainActivity : AppCompatActivity() {
             print("height: $height")
             print("isBoy: $isBoy")
             print("interest: $interest")
-//            print("testError: "+kvStorage.getInt("username"))
 
             // 对象存储
             val user = User("John", "Doe", 30)
             kvStorage.putObject("user", user, GsonSerializer(User::class.java))
-
-            // 监听变化
-            launch {
-                kvStorage.observe("user").collect { user ->
-                    print("User changed: $user")
-                }
-            }
-
+            delay(1500)
+            kvStorage.putString("username", "zhn")
 
             // 批量操作
             kvStorage.putAll(
@@ -103,8 +112,6 @@ class MainActivity : AppCompatActivity() {
             )
 
             // 数据迁移
-
-
             spStorage.migrateFrom(kvStorage)
             mmkvStorage.migrateFrom(kvStorage)
             dtStorage.migrateFrom(kvStorage)
@@ -116,9 +123,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun delegateDemo() {
+
+        MainLocalKvService.username.getValueForMain(lifecycleScope) {
+            print("getValueForMain: $it")
+        }
+
+        lifecycleScope.launch {
+            MainLocalKvService.username.setValue("zhn")
+            val name = MainLocalKvService.username.getValue()
+            print("name: $name")
+            delay(1500)
+            MainLocalKvService.username.setValue("trust")
+        }
+    }
+
     private fun print(msg: String) {
         Log.d(TAG, msg)
     }
 }
 
-data class User(val firstName: String, val secondName: String, val age: Int)
+data class User(var firstName: String, val secondName: String, val age: Int)
