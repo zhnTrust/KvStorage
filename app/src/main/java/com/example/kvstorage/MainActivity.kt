@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.asynckv.AES
 import com.example.asynckv.AesKVEncryptor
 import com.example.asynckv.KVStorageFactory
 import com.tencent.mmkv.MMKV
@@ -45,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             KVStorageFactory.StorageType.DATASTORE
         )
         val encryptor = AesKVEncryptor(
-            passWord = "pwd123".toByteArray(),
+            passWord = "pwd123",
         )
         mmkvStorage.enableEncryption(encryptor)
         spStorage.enableEncryption(encryptor)
@@ -56,9 +55,9 @@ class MainActivity : AppCompatActivity() {
         // 基本使用
         lifecycleScope.launch {
             val kvStorage = spStorage
-            val str = AES.encrypt("你好")
-            print("-=-=加密: " + str!!)
-            print("-=-=解密: " + AES.decrypt(str))
+//            val str = AES.encrypt("你好")
+//            print("-=-=加密: " + str!!)
+//            print("-=-=解密: " + AES.decrypt(str))
             // 存储数据
             kvStorage.putString("username", "john_doe")
             kvStorage.putInt("age", 20)
@@ -80,6 +79,7 @@ class MainActivity : AppCompatActivity() {
             print("height: $height")
             print("isBoy: $isBoy")
             print("interest: $interest")
+//            print("testError: "+kvStorage.getInt("username"))
 
             // 对象存储
             val user = User("John", "Doe", 30)

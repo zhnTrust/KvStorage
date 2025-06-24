@@ -56,8 +56,8 @@ interface ObjectSerializer<T> {
  * 加密接口
  */
 interface KVEncryptor {
-    fun encrypt(data: String): String
-    fun decrypt(encrypted: String): String
+    fun encrypt(data: String): String?
+    fun decrypt(encrypted: String): String?
 }
 
 /**

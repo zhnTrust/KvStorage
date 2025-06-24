@@ -49,7 +49,7 @@ class MMKVStorage(
         defaultValue: T,
         clazz: KClass<T>
     ): T? {
-        val value = when (defaultValue) {
+        val value = when (clazz) {
             Int::class -> mmkv.getInt(getTypeKey<Int>(key), defaultValue as Int)
             Long::class -> mmkv.getLong(getTypeKey<Long>(key), defaultValue as Long)
             Float::class -> mmkv.getFloat(getTypeKey<Float>(key), defaultValue as Float)

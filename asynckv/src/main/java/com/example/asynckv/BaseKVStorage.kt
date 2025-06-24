@@ -18,7 +18,7 @@ abstract class BaseKVStorage : KVStorage {
     private val Any.encryptValue
         get() = run {
             if (encryptor != null && this is String) {
-                encryptor!!.encrypt(this)
+                encryptor!!.encrypt(this)?:this
             } else {
                 this
             }
@@ -27,7 +27,7 @@ abstract class BaseKVStorage : KVStorage {
     private val Any.decryptValue
         get() = run {
             if (encryptor != null && this is String) {
-                encryptor!!.decrypt(this)
+                encryptor!!.decrypt(this)?:this
             } else {
                 this
             }
