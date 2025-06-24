@@ -36,7 +36,6 @@ suspend fun <T : Any> KVStorage.putTyped(key: String, defaultValue: T) {
     }
 }
 
-
 /**
  * 协程作用域扩展
  */
@@ -45,26 +44,45 @@ fun KVStorage.withScope(scope: CoroutineScope): ScopedKVStorage {
 }
 
 interface ScopedKVStorage {
-    fun putString(key: String, value: String)
-    fun getString(key: String, defaultValue: String = "", callback: (String) -> Unit)
-    // 其他方法...
+    fun getAll(callback: (Map<String, *>) -> Unit)
+    fun putValue(key: String, value: Any)
+    fun <T : Any> getValue(key: String, defaultValue: T, callback: (T) -> Unit)
+    fun clearAll()
+    fun putAll(data: Map<String, Any>)
 }
 
-private class ScopedKVStorageImpl(
+class ScopedKVStorageImpl(
     private val delegate: KVStorage,
     private val scope: CoroutineScope
 ) : ScopedKVStorage {
-    override fun putString(key: String, value: String) {
+    override fun getAll(callback: (Map<String, *>) -> Unit) {
         scope.launch {
-            delegate.putString(key, value)
+            val all = delegate.getAll()
+            callback(all)
         }
     }
 
-    override fun getString(key: String, defaultValue: String, callback: (String) -> Unit) {
+    override fun putValue(key: String, value: Any) {
         scope.launch {
-            val value = delegate.getString(key, defaultValue)
-            callback(value)
+            delegate.putTyped(key, value)
         }
     }
-    // 其他方法实现...
+
+    override fun <T : Any> getValue(key: String, defaultValue: T, callback: (T) -> Unit) {
+        scope.launch {
+            val value = delegate.getTyped(key, defaultValue)
+            callback.invoke(value)
+        }
+    }
+
+    override fun clearAll() {
+        scope.launch { delegate.clear() }
+    }
+
+    override fun putAll(data: Map<String, Any>) {
+        scope.launch {
+            delegate.putAll(data)
+        }
+    }
+
 }

@@ -2,6 +2,7 @@ package com.example.asynckv
 
 import KVStorage
 import ObjectSerializer
+import androidx.lifecycle.asLiveData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,18 +15,20 @@ import kotlinx.coroutines.withContext
 abstract class AsyncTypeDelegation(
     private val defaultScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val userId: (() -> String)? = null,
-    private val storage: () -> KVStorage,
+    private val storage: KVStorage,
 ) {
     private val delegate
-        get() = storage()
+        get() = storage.withScope(defaultScope)
 
-    suspend fun getAll() = delegate.getAll()
-
-    suspend fun clearAll() {
-        delegate.clear()
+    fun getAll(callback: (Map<String, *>) -> Unit) {
+        delegate.getAll(callback)
     }
 
-    suspend fun putAll(data: Map<String, Any>) {
+    fun clearAll() {
+        delegate.clearAll()
+    }
+
+    fun putAll(data: Map<String, Any>) {
         delegate.putAll(data)
     }
 
@@ -34,10 +37,14 @@ abstract class AsyncTypeDelegation(
         val default: T
     ) {
 
-        suspend fun getValue() = delegate.getTyped(key, default)
+        suspend fun getValue() = storage.getTyped(key, default)
 
-        suspend fun setValue(value: T) {
-            delegate.putTyped(key, value)
+        suspend fun putValue(value: T) {
+            storage.putTyped(key, value)
+        }
+
+        fun getvalue(callback: (T) -> Unit) {
+            delegate.getValue(key, default, callback)
         }
 
         fun getValueForMain(
@@ -52,12 +59,12 @@ abstract class AsyncTypeDelegation(
             }
         }
 
-//        fun asFlow() = delegate.observe<T>(key)
-//        fun asLiveData() = delegate.observe<T>(key).asLiveData()
-
         fun apply(value: T) {
-            defaultScope.launch { setValue(value) }
+            delegate.putValue(key, value)
         }
+
+        fun asFlow() = storage.observe<T>(key)
+        fun asLiveData() = storage.observe<T>(key).asLiveData()
     }
 
     open inner class PrefObjKey<T : Any>(
@@ -65,10 +72,10 @@ abstract class AsyncTypeDelegation(
         val serializer: ObjectSerializer<T>
     ) {
 
-        suspend fun getValue() = delegate.getObject(key, serializer)
+        suspend fun getValue() = storage.getObject(key, serializer)
 
         suspend fun setValue(value: T) {
-            delegate.putObject(key, value, serializer)
+            storage.putObject(key, value, serializer)
         }
 
         fun getValueForMain(
@@ -87,7 +94,7 @@ abstract class AsyncTypeDelegation(
 //        fun asLiveData() = delegate.observe<T>(key).asLiveData()
 
         fun apply(value: T) {
-            defaultScope.launch { setValue(value) }
+            delegate.putValue(key, value)
         }
     }
 

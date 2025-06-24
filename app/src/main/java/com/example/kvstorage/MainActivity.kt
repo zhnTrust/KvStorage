@@ -14,7 +14,6 @@ import com.example.asynckv.AesKVEncryptor
 import com.example.asynckv.KVStorageFactory
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 
@@ -55,10 +54,11 @@ class MainActivity : AppCompatActivity() {
 
         val kvStorage = mmkvStorage
 
-        //这个封装获取不到
-//        MainLocalKvService.username.asLiveData().observe(this) {
-//            print("delegate liveData User changed: $it")
-//        }
+        //代理获取不到？
+        MainLocalKvService.username.asLiveData().observe(this) {
+            print("delegate liveData User changed: $it")
+        }
+        //实现可获取到
         kvStorage.observe<String>("username").asLiveData().observe(this) {
             print("liveData User changed: $it")
         }
@@ -130,11 +130,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            MainLocalKvService.username.setValue("zhn")
+            MainLocalKvService.username.putValue("zhn")
             val name = MainLocalKvService.username.getValue()
             print("name: $name")
             delay(1500)
-            MainLocalKvService.username.setValue("trust")
+            MainLocalKvService.username.putValue("trust")
         }
     }
 

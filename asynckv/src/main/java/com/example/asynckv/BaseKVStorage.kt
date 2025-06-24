@@ -56,7 +56,6 @@ abstract class BaseKVStorage : KVStorage {
         return getValue<Set<String>>(key, defaultValue) as? Set<String> ?: defaultValue
     }
 
-
     override suspend fun putInt(key: String, value: Int) = putValue(key, value)
     override suspend fun getInt(key: String, defaultValue: Int): Int {
         return getValue<Int>(key, defaultValue) as? Int ?: defaultValue
