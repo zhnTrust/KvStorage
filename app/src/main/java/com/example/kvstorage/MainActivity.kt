@@ -1,6 +1,5 @@
 package com.example.kvstorage
 
-import com.zhn.asynckv.serialize.GsonSerializer
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
@@ -10,14 +9,21 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
-import com.zhn.asynckv.crypto.AesKVEncryptor
 import com.tencent.mmkv.MMKV
+import com.zhn.asynckv.crypto.AesKVEncryptor
+import com.zhn.asynckv.serialize.GsonSerializer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
+
+    private val tvText
+        get() = findViewById<TextView>(R.id.tv_hello) as TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MMKV.initialize(this)
@@ -29,13 +35,13 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        findViewById<TextView>(R.id.tv_hello).setOnClickListener {
-            demo()
+        tvText.setOnClickListener {
+            basicDemo()
         }
     }
 
 
-    fun demo() {
+    fun basicDemo() {
         // 创建存储实例
         val mmkvStorage = KVStorageFactory.create(this, KVStorageFactory.StorageType.MMKV)
         val spStorage =
@@ -44,6 +50,8 @@ class MainActivity : AppCompatActivity() {
             this@MainActivity,
             KVStorageFactory.StorageType.DATASTORE
         )
+
+        // 启用加密
         val encryptor = AesKVEncryptor(
             passWord = "pwd123",
         )
@@ -53,25 +61,22 @@ class MainActivity : AppCompatActivity() {
 
         val kvStorage = mmkvStorage
 
-        //代理获取不到？
-        MainLocalKvService.username.asLiveData().observe(this) {
-            print("delegate liveData User changed: $it")
-        }
         //实现可获取到
-        kvStorage.observe<String>("username").asLiveData().observe(this) {
+        kvStorage.observe<String>("user").asLiveData().observe(this) {
             print("liveData User changed: $it")
         }
-        // 启用加密
 
+
+//        val scope=lifecycleScope
+        val scope= CoroutineScope(Dispatchers.IO)
         // 基本使用
-        lifecycleScope.launch {
-
+        scope.launch {
             // 监听变化
-//            launch {
-//                kvStorage.observe("user").collect { user ->
-//                    print("User changed: $user")
-//                }
-//            }
+            launch {
+                kvStorage.observe<String>("user").collect { user ->
+                    print("flow User changed: $user")
+                }
+            }
 
             // 存储数据
             kvStorage.putString("username", "john_doe")
@@ -95,11 +100,9 @@ class MainActivity : AppCompatActivity() {
             print("isBoy: $isBoy")
             print("interest: $interest")
 
-            // 对象存储
+            // 变更
             val user = User("John", "Doe", 30)
             kvStorage.putObject("user", user, GsonSerializer(User::class.java))
-            delay(1500)
-            kvStorage.putString("username", "zhn")
 
             // 批量操作
             kvStorage.putAll(
@@ -118,27 +121,54 @@ class MainActivity : AppCompatActivity() {
             print("spStorage: ${spStorage.getAll()}")
             print("mmkvStorage: ${mmkvStorage.getAll()}")
             print("dtStorage: ${dtStorage.getAll()}")
-//            print("${dtStorage.getFloat("username")}")
         }
     }
 
+    /**
+     * 代理使用
+     */
     private fun delegateDemo() {
 
+        MainLocalKvService.username.getvalue {
+            print("getvalue: $it")
+        }
         MainLocalKvService.username.getValueForMain(lifecycleScope) {
             print("getValueForMain: $it")
         }
 
+        MainLocalKvService.username.asLiveData().observe(this) {
+            print("liveData observe changed: $it")
+        }
         lifecycleScope.launch {
-            MainLocalKvService.username.putValue("zhn")
+            MainLocalKvService.username.asFlow().collect {
+                print("flow observe changed: $it")
+            }
+        }
+        //实现可获取到
+        MainLocalKvService.username.setValue("john_doe")
+        MainLocalKvService.age.setValue(20)
+        MainLocalKvService.height.setValue(185)
+        MainLocalKvService.score.setValue(99.9f)
+        MainLocalKvService.isBoy.setValue(true)
+        MainLocalKvService.interest.setValue(setOf("GYM", "Football"))
+
+        val printName = suspend {
             val name = MainLocalKvService.username.getValue()
-            print("name: $name")
+            print("suspend getName: $name")
+        }
+        lifecycleScope.launch {
+            printName()
+            MainLocalKvService.username.putValue("zhn")
+            printName()
             delay(1500)
             MainLocalKvService.username.putValue("trust")
+            printName()
         }
     }
 
+
     private fun print(msg: String) {
-        Log.d(TAG, msg)
+        Log.d(TAG, "thread:{${Thread.currentThread()}}, " + msg)
     }
 }
 

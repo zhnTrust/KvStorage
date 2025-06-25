@@ -17,19 +17,19 @@ abstract class KvStorageTypeDelegation(
     private val userId: (() -> String)? = null,
     private val storage: KVStorage,
 ) {
-    private val delegate
+    private val scopedKv
         get() = storage.withScope(defaultScope)
 
     fun getAll(callback: (Map<String, *>) -> Unit) {
-        delegate.getAll(callback)
+        scopedKv.getAll(callback)
     }
 
     fun clearAll() {
-        delegate.clearAll()
+        scopedKv.clearAll()
     }
 
     fun putAll(data: Map<String, Any>) {
-        delegate.putAll(data)
+        scopedKv.putAll(data)
     }
 
     open inner class PrefKey<T : Any>(
@@ -44,12 +44,12 @@ abstract class KvStorageTypeDelegation(
         }
 
         fun getvalue(callback: (T) -> Unit) {
-            delegate.getValue(key, default, callback)
+            scopedKv.getValue(key, default, callback)
         }
 
         fun getValueForMain(
             scope: CoroutineScope = defaultScope,
-            onReceive: suspend (T) -> Unit
+            onReceive: (T) -> Unit
         ) {
             scope.launch {
                 val value = getValue()
@@ -59,8 +59,8 @@ abstract class KvStorageTypeDelegation(
             }
         }
 
-        fun apply(value: T) {
-            delegate.putValue(key, value)
+        fun setValue(value: T) {
+            scopedKv.putValue(key, value)
         }
 
         fun asFlow() = storage.observe<T>(key)
@@ -94,7 +94,7 @@ abstract class KvStorageTypeDelegation(
 //        fun asLiveData() = delegate.observe<T>(key).asLiveData()
 
         fun apply(value: T) {
-            delegate.putValue(key, value)
+            scopedKv.putValue(key, value)
         }
     }
 

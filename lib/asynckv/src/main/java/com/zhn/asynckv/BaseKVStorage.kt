@@ -87,7 +87,7 @@ abstract class BaseKVStorage : KVStorage {
     }
 
     override suspend fun <T> putObject(key: String, value: T, serializer: ObjectSerializer<T>) {
-        val serialized = serializer.serialize(value)
+        val serialized = serializer.serialize(value)?:value.toString()
         putString(key, serialized)
     }
 

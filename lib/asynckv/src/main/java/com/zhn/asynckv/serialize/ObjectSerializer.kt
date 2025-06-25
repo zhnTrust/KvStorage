@@ -6,6 +6,6 @@ package com.zhn.asynckv.serialize
  * 对象序列化接口
  */
 interface ObjectSerializer<T> {
-    fun serialize(obj: T): String
-    fun deserialize(data: String): T
+    fun serialize(obj: T): String?
+    fun deserialize(data: String): T?
 }
