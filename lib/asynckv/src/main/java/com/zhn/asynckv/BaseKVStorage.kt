@@ -1,7 +1,6 @@
 package com.zhn.asynckv
 
 import com.zhn.asynckv.crypto.KVEncryptor
-import com.zhn.asynckv.KVDataMigration
 import com.zhn.asynckv.serialize.ObjectSerializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -10,6 +9,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
@@ -18,7 +19,9 @@ import kotlin.reflect.KClass
  *
  * 实现KVStorage的基类,抽象封装
  */
-abstract class BaseKVStorage : KVStorage {
+abstract class BaseKVStorage(private val initMigrations: List<KVDataMigration>? = null) : KVStorage {
+    private val mutex = Mutex()
+    private var isInit = false
     private val changeFlow = MutableStateFlow<Pair<String, Any?>>(Pair("", null))
     private var encryptor: KVEncryptor? = null
 
@@ -87,7 +90,7 @@ abstract class BaseKVStorage : KVStorage {
     }
 
     override suspend fun <T> putObject(key: String, value: T, serializer: ObjectSerializer<T>) {
-        val serialized = serializer.serialize(value)?:value.toString()
+        val serialized = serializer.serialize(value) ?: value.toString()
         putString(key, serialized)
     }
 
@@ -102,6 +105,7 @@ abstract class BaseKVStorage : KVStorage {
 
     override suspend fun putAll(values: Map<String, Any>) {
         withContext(Dispatchers.IO) {
+            tryInitMigrations()
             values.forEach { (key, value) ->
                 performPut(key, value.encryptValue)
                 notifyChange(key, value)
@@ -111,6 +115,7 @@ abstract class BaseKVStorage : KVStorage {
 
     override suspend fun getAll(keys: List<String>?): Map<String, Any> {
         return withContext(Dispatchers.IO) {
+            tryInitMigrations()
             if (keys.isNullOrEmpty()) {
                 performGetAll()
             } else {
@@ -123,6 +128,7 @@ abstract class BaseKVStorage : KVStorage {
 
     override suspend fun remove(key: String) {
         withContext(Dispatchers.IO) {
+            tryInitMigrations()
             performRemove(key)
             notifyChange(key, null)
         }
@@ -139,6 +145,7 @@ abstract class BaseKVStorage : KVStorage {
 
     override suspend fun clear() {
         withContext(Dispatchers.IO) {
+            tryInitMigrations()
             performClear()
             notifyChange("", null) // 空key表示全部清除
         }
@@ -168,18 +175,16 @@ abstract class BaseKVStorage : KVStorage {
             .flowOn(Dispatchers.Default)
     }
 
-    override suspend fun migrateFrom(others: List<KVStorage>) {
+    override suspend fun migrateFrom(other: KVStorage) {
         withContext(Dispatchers.IO) {
-            others.forEach { other->
-                putAll(other.getAll())
-                other.clear()
-            }
+            putAll(other.getAll())
+            other.clear()
         }
     }
 
-    override suspend fun migrateFrom(migrations: List<KVDataMigration>) {
+    override suspend fun migrateFrom(migrations: List<KVDataMigration>?) {
         withContext(Dispatchers.IO) {
-            migrations.forEach { migration ->
+            migrations?.forEach { migration ->
                 if (migration.shouldMigrate(this@BaseKVStorage)) {
                     migration.migrate(this@BaseKVStorage)
                     migration.cleanUp()
@@ -195,6 +200,7 @@ abstract class BaseKVStorage : KVStorage {
 
     private suspend fun putValue(key: String, value: Any) {
         withContext(Dispatchers.IO) {
+            tryInitMigrations()
             performPut(key, value.encryptValue)
             notifyChange(key, value)
         }
@@ -208,5 +214,15 @@ abstract class BaseKVStorage : KVStorage {
 
     protected fun notifyChange(key: String, value: Any?) {
         changeFlow.tryEmit(Pair(key, value))
+    }
+
+    private suspend fun tryInitMigrations() {
+        if (isInit) return
+        mutex.withLock(this) {
+            if (!isInit) {
+                migrateFrom(initMigrations)
+                isInit = true
+            }
+        }
     }
 }

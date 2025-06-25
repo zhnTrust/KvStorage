@@ -115,9 +115,9 @@ class MainActivity : AppCompatActivity() {
             )
 
             // 数据迁移
-            spStorage.migrateFrom(listOf(kvStorage))
-            mmkvStorage.migrateFrom(listOf(kvStorage))
-            dtStorage.migrateFrom(listOf(kvStorage))
+            spStorage.migrateFrom(kvStorage)
+            mmkvStorage.migrateFrom(kvStorage)
+            dtStorage.migrateFrom(kvStorage)
 
             print("spStorage: ${spStorage.getAll()}")
             print("mmkvStorage: ${mmkvStorage.getAll()}")

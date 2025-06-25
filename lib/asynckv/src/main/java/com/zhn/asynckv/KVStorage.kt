@@ -40,12 +40,12 @@ interface KVStorage {
     suspend fun clear()
 
     // 监听
-    fun <T>observe(key: String): Flow<T?>
+    fun <T> observe(key: String): Flow<T?>
     fun observeAll(): Flow<Map<String, Any?>>
 
     // 迁移
-    suspend fun migrateFrom(others: List<KVStorage>)
-    suspend fun migrateFrom(kvDataMigration: List<KVDataMigration>)
+    suspend fun migrateFrom(others: KVStorage)
+    suspend fun migrateFrom(kvDataMigration: List<KVDataMigration>? = null)
 
     // 加密
     fun enableEncryption(encryptor: KVEncryptor?)
