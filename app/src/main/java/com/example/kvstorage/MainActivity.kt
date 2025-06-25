@@ -15,6 +15,7 @@ import com.zhn.asynckv.serialize.GsonSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 
@@ -68,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
 
 //        val scope=lifecycleScope
-        val scope= CoroutineScope(Dispatchers.IO)
+        val scope = CoroutineScope(Dispatchers.IO)
         // 基本使用
         scope.launch {
             // 监听变化
@@ -114,9 +115,9 @@ class MainActivity : AppCompatActivity() {
             )
 
             // 数据迁移
-            spStorage.migrateFrom(kvStorage)
-            mmkvStorage.migrateFrom(kvStorage)
-            dtStorage.migrateFrom(kvStorage)
+            spStorage.migrateFrom(listOf(kvStorage))
+            mmkvStorage.migrateFrom(listOf(kvStorage))
+            dtStorage.migrateFrom(listOf(kvStorage))
 
             print("spStorage: ${spStorage.getAll()}")
             print("mmkvStorage: ${mmkvStorage.getAll()}")
@@ -140,11 +141,14 @@ class MainActivity : AppCompatActivity() {
             print("liveData observe changed: $it")
         }
         lifecycleScope.launch {
-            MainLocalKvService.username.asFlow().collect {
-                print("flow observe changed: $it")
-            }
+            MainLocalKvService.username.asFlow()
+                .map {
+                    it + "_wenext"
+                }.collect {
+                    print("flow observe changed: $it")
+                }
         }
-        //实现可获取到
+        //赋值
         MainLocalKvService.username.setValue("john_doe")
         MainLocalKvService.age.setValue(20)
         MainLocalKvService.height.setValue(185)

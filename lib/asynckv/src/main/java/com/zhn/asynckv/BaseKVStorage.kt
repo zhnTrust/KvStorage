@@ -22,7 +22,7 @@ abstract class BaseKVStorage : KVStorage {
     private val changeFlow = MutableStateFlow<Pair<String, Any?>>(Pair("", null))
     private var encryptor: KVEncryptor? = null
 
-    override fun enableEncryption(encryptor: KVEncryptor) {
+    override fun enableEncryption(encryptor: KVEncryptor?) {
         this.encryptor = encryptor
     }
 
@@ -168,32 +168,21 @@ abstract class BaseKVStorage : KVStorage {
             .flowOn(Dispatchers.Default)
     }
 
-    override suspend fun migrateFrom(other: KVStorage) {
+    override suspend fun migrateFrom(others: List<KVStorage>) {
         withContext(Dispatchers.IO) {
-            putAll(other.getAll())
+            others.forEach { other->
+                putAll(other.getAll())
+                other.clear()
+            }
         }
     }
 
     override suspend fun migrateFrom(migrations: List<KVDataMigration>) {
         withContext(Dispatchers.IO) {
-            val cleanUps = mutableListOf<suspend () -> Unit>()
             migrations.forEach { migration ->
                 if (migration.shouldMigrate(this@BaseKVStorage)) {
-                    cleanUps.add { migration.cleanUp() }
                     migration.migrate(this@BaseKVStorage)
-                }
-            }
-            var cleanUpFailure: Throwable? = null
-
-            cleanUps.forEach { cleanUp ->
-                try {
-                    cleanUp()
-                } catch (exception: Throwable) {
-                    if (cleanUpFailure == null) {
-                        cleanUpFailure = exception
-                    } else {
-                        cleanUpFailure.addSuppressed(exception)
-                    }
+                    migration.cleanUp()
                 }
             }
         }
@@ -205,7 +194,6 @@ abstract class BaseKVStorage : KVStorage {
     }
 
     private suspend fun putValue(key: String, value: Any) {
-        Dispatchers
         withContext(Dispatchers.IO) {
             performPut(key, value.encryptValue)
             notifyChange(key, value)

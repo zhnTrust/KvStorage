@@ -44,11 +44,11 @@ interface KVStorage {
     fun observeAll(): Flow<Map<String, Any?>>
 
     // 迁移
-    suspend fun migrateFrom(other: KVStorage)
+    suspend fun migrateFrom(others: List<KVStorage>)
     suspend fun migrateFrom(kvDataMigration: List<KVDataMigration>)
 
     // 加密
-    fun enableEncryption(encryptor: KVEncryptor)
+    fun enableEncryption(encryptor: KVEncryptor?)
 }
 
 
