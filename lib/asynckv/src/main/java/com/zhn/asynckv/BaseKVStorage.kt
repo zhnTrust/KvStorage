@@ -208,6 +208,7 @@ abstract class BaseKVStorage(private val initMigrations: List<KVDataMigration>? 
 
     private suspend inline fun <reified T : Any> getValue(key: String, defaultValue: T): T? {
         return withContext(Dispatchers.IO) {
+            tryInitMigrations()
             performGet<T>(key, defaultValue, T::class).decryptValue as T
         }
     }
