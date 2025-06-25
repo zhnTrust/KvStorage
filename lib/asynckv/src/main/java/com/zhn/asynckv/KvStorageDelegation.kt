@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
  * Created by zhn on 2025/6/18.
  *
  */
-abstract class KvStorageTypeDelegation(
+abstract class KvStorageDelegation(
     private val defaultScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val userId: (() -> String)? = null,
     private val storage: KVStorage,
@@ -32,7 +32,7 @@ abstract class KvStorageTypeDelegation(
         scopedKv.putAll(data)
     }
 
-    open inner class PrefKey<T : Any>(
+    open inner class Key<T : Any>(
         open val key: String,
         val default: T
     ) {
@@ -67,14 +67,14 @@ abstract class KvStorageTypeDelegation(
         fun asLiveData() = storage.observe<T>(key).asLiveData()
     }
 
-    open inner class PrefObjKey<T : Any>(
+    open inner class ObjKey<T : Any>(
         open val key: String,
         val serializer: ObjectSerializer<T>
     ) {
 
         suspend fun getValue() = storage.getObject(key, serializer)
 
-        suspend fun setValue(value: T) {
+        suspend fun putValue(value: T) {
             storage.putObject(key, value, serializer)
         }
 
@@ -90,18 +90,18 @@ abstract class KvStorageTypeDelegation(
             }
         }
 
-//        fun asFlow() = delegate.observe<T>(key)
-//        fun asLiveData() = delegate.observe<T>(key).asLiveData()
+        fun asFlow() = storage.observe<T>(key)
+        fun asLiveData() = storage.observe<T>(key).asLiveData()
 
-        fun apply(value: T) {
+        fun setValue(value: T) {
             scopedKv.putValue(key, value)
         }
     }
 
-    inner class PrefUserKey<T : Any>(
+    inner class UserKey<T : Any>(
         key: String,
         default: T
-    ) : PrefKey<T>(key, default) {
+    ) : Key<T>(key, default) {
 
         override val key: String = key
             get() {
@@ -111,10 +111,10 @@ abstract class KvStorageTypeDelegation(
             }
     }
 
-    inner class PrefUserObjKey<T : Any>(
+    inner class UserObjKey<T : Any>(
         key: String,
         serializer: ObjectSerializer<T>
-    ) : PrefObjKey<T>(key, serializer) {
+    ) : ObjKey<T>(key, serializer) {
 
         override val key: String = key
             get() {

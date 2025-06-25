@@ -12,8 +12,7 @@ import kotlinx.coroutines.flow.first
  *
  * DataStore迁移实现
  */
-class DataStoreMigration(produce: () -> DataStore<Preferences>) : KVDataMigration {
-    private val dataStore by lazy(produce)
+class DataStoreMigration(private val dataStore: DataStore<Preferences>) : KVDataMigration {
 
     suspend fun DataStore<Preferences>.all() = data.first().asMap().mapKeys { it.key.name }
 

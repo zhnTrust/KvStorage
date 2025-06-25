@@ -11,7 +11,11 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/asynckv" />
+            <option value="$PROJECT_DIR$/lib" />
+            <option value="$PROJECT_DIR$/lib/asynckv" />
+            <option value="$PROJECT_DIR$/lib/asynckv-datastore" />
+            <option value="$PROJECT_DIR$/lib/asynckv-mmkv" />
+            <option value="$PROJECT_DIR$/lib/asynckv-preference" />
           </set>
         </option>
       </GradleProjectSettings>
