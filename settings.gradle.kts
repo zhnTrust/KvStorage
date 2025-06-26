@@ -17,8 +17,7 @@ dependencyResolutionManagement {
         maven("${rootDir}/repo".also { print(it) })
         google()
         mavenCentral()
-        mavenLocal()
-
+//        mavenLocal()
     }
 }
 
