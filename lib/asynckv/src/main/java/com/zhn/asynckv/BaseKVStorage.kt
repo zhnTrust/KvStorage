@@ -178,7 +178,6 @@ abstract class BaseKVStorage(private val initMigrations: List<KVDataMigration>? 
     override suspend fun migrateFrom(other: KVStorage) {
         withContext(Dispatchers.IO) {
             putAll(other.getAll())
-            other.clear()
         }
     }
 

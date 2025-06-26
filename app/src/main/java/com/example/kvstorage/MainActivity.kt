@@ -44,9 +44,9 @@ class MainActivity : AppCompatActivity() {
 
     fun basicDemo() {
         // 创建存储实例
-        val mmkvStorage = KVStorageFactory.create(this, KVStorageFactory.StorageType.MMKV)
         val spStorage =
             KVStorageFactory.create(this, KVStorageFactory.StorageType.SHARED_PREFERENCES)
+        val mmkvStorage = KVStorageFactory.create(this, KVStorageFactory.StorageType.MMKV)
         val dtStorage = KVStorageFactory.create(
             this@MainActivity,
             KVStorageFactory.StorageType.DATASTORE

@@ -1,6 +1,18 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")
+}
+
+
+ext {
+    set("GROUP_ID","com.zhn.asynckv")
+    set("ARTIFACT_ID","asynckv-datastore")
+    set("VERSION","1.0.0")
+}
+
+apply {
+    from("../../publish.gradle")
 }
 
 android {
@@ -41,5 +53,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    api("androidx.datastore:datastore-preferences:1.1.7")
     api(project(":lib:asynckv"))
 }

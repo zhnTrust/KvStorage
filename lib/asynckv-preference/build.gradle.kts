@@ -1,7 +1,20 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")
 }
+
+
+ext {
+    set("GROUP_ID","com.zhn.asynckv")
+    set("ARTIFACT_ID","asynckv-preference")
+    set("VERSION","1.0.0")
+}
+
+apply {
+    from("../../publish.gradle")
+}
+
 
 android {
     namespace = "com.example.asynckv"
