@@ -52,6 +52,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    api("androidx.lifecycle:lifecycle-livedata-ktx:2.9.1")
-    api("com.google.code.gson:gson:2.13.1")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.1")
+    implementation("com.google.code.gson:gson:2.13.1")
 }

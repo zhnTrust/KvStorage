@@ -53,6 +53,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    api("com.tencent:mmkv:1.3.12")
-    api(project(":lib:asynckv"))
+
+    implementation("com.tencent:mmkv:2.2.2")
+
+//    api(project(":lib:asynckv"))
+    implementation(libs.asynckv)
 }

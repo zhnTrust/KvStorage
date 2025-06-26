@@ -50,7 +50,7 @@ publishing {
     repositories {
         mavenLocal()
         maven {
-            url '../../maven'
+            url '../../repo'
         }
     }
 }

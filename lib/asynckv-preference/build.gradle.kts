@@ -53,5 +53,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    api(project(":lib:asynckv"))
+
+//    implementation(project(":lib:asynckv"))
+    implementation(libs.asynckv)
 }

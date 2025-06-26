@@ -122,6 +122,10 @@ class MainActivity : AppCompatActivity() {
             print("spStorage: ${spStorage.getAll()}")
             print("mmkvStorage: ${mmkvStorage.getAll()}")
             print("dtStorage: ${dtStorage.getAll()}")
+
+            kvStorage.clear()
+            print("kvStorage: ${kvStorage.getAll()}")
+
         }
     }
 

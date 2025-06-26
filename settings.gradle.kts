@@ -14,10 +14,11 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven("${rootDir}/repo".also { print(it) })
         google()
         mavenCentral()
         mavenLocal()
-        maven("./maven")
+
     }
 }
 

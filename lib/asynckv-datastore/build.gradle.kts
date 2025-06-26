@@ -53,6 +53,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    api("androidx.datastore:datastore-preferences:1.1.7")
-    api(project(":lib:asynckv"))
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+//    implementation(project(":lib:asynckv"))
+    implementation(libs.asynckv)
 }
