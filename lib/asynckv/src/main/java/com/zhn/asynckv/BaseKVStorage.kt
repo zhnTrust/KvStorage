@@ -21,6 +21,7 @@ import kotlin.reflect.KClass
  */
 abstract class BaseKVStorage(private val initMigrations: List<KVDataMigration>? = null) : KVStorage {
     private val mutex = Mutex()
+    @Volatile
     private var isInit = false
     private val changeFlow = MutableStateFlow<Pair<String, Any?>>(Pair("", null))
     private var encryptor: KVEncryptor? = null
