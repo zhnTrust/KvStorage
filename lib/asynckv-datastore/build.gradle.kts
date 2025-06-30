@@ -54,6 +54,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
-//    implementation(project(":lib:asynckv"))
-    implementation(libs.asynckv)
+    compileOnly(project(":lib:asynckv"))
 }

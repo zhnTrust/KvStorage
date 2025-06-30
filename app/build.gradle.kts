@@ -50,16 +50,19 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
 //    api("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
-
-//    implementation(project(":lib:asynckv-mmkv"))
-//    implementation(project(":lib:asynckv-datastore"))
-//    implementation(project(":lib:asynckv-preference"))
-
     implementation("com.tencent:mmkv:2.2.2")
-    implementation(libs.asynckv)
-    implementation(libs.asynckv.mmkv)
-    implementation(libs.asynckv.datastore)
-    implementation(libs.asynckv.preference)
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+
+    implementation(project(":lib:asynckv"))
+    implementation(project(":lib:asynckv-mmkv"))
+    implementation(project(":lib:asynckv-datastore"))
+    implementation(project(":lib:asynckv-preference"))
+
+
+//    implementation(libs.asynckv)
+//    implementation(libs.asynckv.mmkv)
+//    implementation(libs.asynckv.datastore)
+//    implementation(libs.asynckv.preference)
 
 
 }

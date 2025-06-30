@@ -56,6 +56,5 @@ dependencies {
 
     implementation("com.tencent:mmkv:2.2.2")
 
-//    api(project(":lib:asynckv"))
-    implementation(libs.asynckv)
+    compileOnly(project(":lib:asynckv"))
 }
